@@ -1,11 +1,8 @@
 from telegram import Update
 from telegram.ext import ContextTypes
-from respostas import respostas_rapidas, gatilhos
+from respostas import respostas_rapidas, gatilhos, respostas_seguimento
 from datetime import datetime, timedelta
-
 import os
-
- 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -25,15 +22,25 @@ async def responder_mensagem(update: Update, context: ContextTypes.DEFAULT_TYPE)
     texto = update.message.text.lower()
     print(f"[Recebido]: {texto}")
 
+    respostas_afirmativas = ["sim", "quero", "topo", "tenho interesse", "claro", "sim quero"]
+    ultimo_topico = context.user_data.get("ultimo_topico")
+
+    if any(p in texto for p in respostas_afirmativas):
+        if ultimo_topico and ultimo_topico in respostas_seguimento:
+            await update.message.reply_text(respostas_seguimento[ultimo_topico])
+            return
+
     for chave, palavras in gatilhos.items():
         if any(p in texto for p in palavras):
+            context.user_data["ultimo_topico"] = chave
             print(f"[Respondendo com]: {chave}")
             await context.bot.send_message(chat_id=update.effective_chat.id, text=respostas_rapidas[chave])
             return
 
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="😅 Não entendi bem, mas me explica melhor que eu te ajudo!")
-
- 
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="😅 Não entendi bem, mas me explica melhor que eu te ajudo!"
+    )
 
 BASE_PATH = "conteudo"
 
@@ -69,9 +76,11 @@ async def professorx(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def professory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await listar_conteudo(update, context, "professor_y")
+
 async def descobrir_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await update.message.reply_text(f"O ID deste grupo é: {chat_id}")
+
 async def liberar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("❌ Use: /liberar @usuario")
@@ -81,18 +90,16 @@ async def liberar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         link = await context.bot.create_chat_invite_link(
-            chat_id=-4913959022,  # ID do seu grupo VIP
+            chat_id=-4913959022,
             name=f"Acesso de {user_to_invite}",
             expire_date=datetime.utcnow() + timedelta(hours=24),
             member_limit=1
         )
-
         await update.message.reply_text(
             f"✅ Acesso liberado para {user_to_invite}:\n{link.invite_link}"
         )
     except Exception as e:
         await update.message.reply_text(f"❌ Erro ao gerar link: {e}")
-from datetime import datetime, timedelta
 
 async def acessar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -100,7 +107,7 @@ async def acessar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         link = await context.bot.create_chat_invite_link(
-            chat_id=-4913959022,  # ID do seu grupo VIP
+            chat_id=-4913959022,
             name=f"Acesso de {nome}",
             expire_date=datetime.utcnow() + timedelta(hours=24),
             member_limit=1
