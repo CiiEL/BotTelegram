@@ -1,0 +1,50 @@
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+
+TOKEN = '8104465905:AAE45QOfgX6L6IpidS3kcMSgXwg8XF71obk'
+
+# Respostas básicas
+respostas_rapidas = {
+    "acesso": "Ofereço Acesso a uma quantidade de Onlyfans/privacy e aumentamos conforme pedidos.",
+    "valor": "o aceso é pago somente uma vez! após isso desfrute e faça seu pedido, atenderemos a todos com o tempo. 💰",
+    "pedidos": "Os pedidos sao anotados, e atendidos, demanda tempo de upload e afins. basta ter paciencia. ⏰",
+    "pagamento": "Aceito Pix, cartão e boleto. Posso te mandar o link! 💳",
+    "grupo": "Você quer entrar no grupo exclusivo de alunos? Posso te mandar o link! 🔗",
+    "ocupado": "No momento estou ocupado, mas você pode deixar sua dúvida aqui que respondo assim que possível. 😉"
+}
+
+# /start
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    msg = (
+        f"Olá, {user.first_name}!\n\n"
+        "Sou o assistente do Trapi 🎙️\n"
+        "Você pode perguntar sobre:\n"
+        "• Acesso à Conteúdo\n"
+        "• Valores\n"
+        "• Formas de pagamento\n"
+        "• Como entrar no grupo\n\n"
+        "É só mandar sua mensagem!"
+    )
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
+
+# Mensagens comuns
+async def responder_mensagem(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    texto = update.message.text.lower()
+
+    for chave, resposta in respostas_rapidas.items():
+        if chave in texto:
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=resposta)
+            return
+
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Não entendi bem 😅, mas me explica melhor que eu te ajudo!")
+
+# Inicialização
+if __name__ == '__main__':
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, responder_mensagem))
+
+    print("Bot rodando...")
+    app.run_polling()
